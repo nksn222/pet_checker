@@ -1,0 +1,13 @@
+[
+  {"name":"カイリン","slug":"kailin","category":"野性","monsters":4,"areas":46,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"エルン川のカイリン、カイリン、不安定なカイリン"},
+  {"name":"魔法クラビ","slug":"magic-gravi","category":"自然","monsters":4,"areas":10,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"トールバスの魔法クラビ、浄化の森の魔法クラビ"},
+  {"name":"スタータートル","slug":"starturtle","category":"野性","monsters":6,"areas":30,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"海岸のスター タートル、池のスター タートル"},
+  {"name":"パピス","slug":"papis","category":"野性","monsters":12,"areas":113,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"色あせたパピスなど"},
+  {"name":"上級地の精霊","slug":"superior-earth-spirit","category":"自然","monsters":3,"areas":7,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"腐植土の精霊、奇岩の精霊、不滅の地の精霊守護者"},
+  {"name":"下級地の精霊","slug":"lesser-earth-spirit","category":"自然","monsters":1,"areas":3,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"永遠の地の精霊"},
+  {"name":"ピノ作業員","slug":"pino-worker","category":"変形","monsters":1,"areas":6,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"険しいピノ作業員"},
+  {"name":"枯れ葉アグリント","slug":"dry-leaf-agrint","category":"自然","monsters":1,"areas":2,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"森のアグリント"},
+  {"name":"ケルビエル","slug":"kerubiel","category":"知性","monsters":2,"areas":6,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"ケルビエル、永遠のケルビエル"},
+  {"name":"ケルビオン","slug":"kerubian","category":"知性","monsters":2,"areas":9,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"ケルビオン、永遠のケルビオン"},
+  {"name":"ピノ","slug":"pino","category":"変形","monsters":2,"areas":9,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"ピノ労働者、ピノ作業員"}
+]
