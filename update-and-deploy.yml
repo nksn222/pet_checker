@@ -7,6 +7,8 @@ on:
       - 'index.html'
       - 'style.css'
       - 'app.js'
+      - 'visual.js'
+      - 'references/**'
       - 'pets.json'
       - 'tools/**'
       - '.github/workflows/**'
@@ -58,7 +60,8 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p public
-          cp index.html style.css app.js pets.json icon.svg manifest.webmanifest sample.jpg public/
+          cp index.html style.css app.js visual.js pets.json icon.svg manifest.webmanifest public/
+          cp -r references public/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public

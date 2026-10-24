@@ -1,0 +1,93 @@
+[
+  {
+    "name": "カイリン",
+    "file": "references/0_0.webp",
+    "source": "user screenshot",
+    "slot": 0,
+    "screen": 0
+  },
+  {
+    "name": "魔法クラビ",
+    "file": "references/0_2.webp",
+    "source": "user screenshot",
+    "slot": 2,
+    "screen": 0
+  },
+  {
+    "name": "スター タートル",
+    "file": "references/0_3.webp",
+    "source": "user screenshot",
+    "slot": 3,
+    "screen": 0
+  },
+  {
+    "name": "パピス",
+    "file": "references/0_4.webp",
+    "source": "user screenshot",
+    "slot": 4,
+    "screen": 0
+  },
+  {
+    "name": "ピノ作業員",
+    "file": "references/0_5.webp",
+    "source": "user screenshot",
+    "slot": 5,
+    "screen": 0
+  },
+  {
+    "name": "下級地の精霊",
+    "file": "references/0_6.webp",
+    "source": "user screenshot",
+    "slot": 6,
+    "screen": 0
+  },
+  {
+    "name": "上級地の精霊",
+    "file": "references/0_7.webp",
+    "source": "user screenshot",
+    "slot": 7,
+    "screen": 0
+  },
+  {
+    "name": "枯れ葉アグリント",
+    "file": "references/0_9.webp",
+    "source": "user screenshot",
+    "slot": 9,
+    "screen": 0
+  },
+  {
+    "name": "ベビー オード蜘蛛",
+    "file": "references/1_0.webp",
+    "source": "user screenshot",
+    "slot": 0,
+    "screen": 1
+  },
+  {
+    "name": "森の精霊",
+    "file": "references/1_1.webp",
+    "source": "user screenshot",
+    "slot": 1,
+    "screen": 1
+  },
+  {
+    "name": "石の精霊",
+    "file": "references/1_3.webp",
+    "source": "user screenshot",
+    "slot": 3,
+    "screen": 1
+  },
+  {
+    "name": "最上級火の精霊",
+    "file": "references/1_4.webp",
+    "source": "user screenshot",
+    "slot": 4,
+    "screen": 1
+  },
+  {
+    "name": "中級火の精霊",
+    "file": "references/1_6.webp",
+    "source": "user screenshot",
+    "slot": 6,
+    "screen": 1
+  }
+]

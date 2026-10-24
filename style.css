@@ -52,3 +52,12 @@ kbd{display:inline-block;min-width:25px;background:#263746;border:1px solid #4b6
 #resultCount{font-weight:500}
 @media(max-width:640px){#shopList{grid-template-columns:1fr}.slot-screenshot{height:80px}}
 @media(min-width:641px){main{max-width:910px}.hero{max-width:910px}.tabbar{max-width:910px;width:100%}}
+
+/* v7 image recognition */
+header h1 small {font-size:11px;color:#75d6d0;letter-spacing:.02em;margin-left:5px}
+.visual-screenshot {display:block;width:130px;height:112px;object-fit:contain;background:#080b10;border-radius:12px;border:1px solid #355260;margin:10px 0}
+.visual-chips{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+.visual-chip {border:1px solid #5d8897;background:#193740;color:#e4fdff;border-radius:9px;padding:9px 10px;font-size:12px;cursor:pointer}
+.visual-chip:hover{border-color:#70c8c2;background:#234b55}
+#visualCoverage {font-weight:600;color:#9fe3e0;margin:6px 0 12px}
+@media(min-width:960px){#shopList{display:grid;grid-template-columns:1fr 1fr;gap:10px}#shopList>.slot-tile{margin:0}}
