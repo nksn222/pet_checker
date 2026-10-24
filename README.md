@@ -1,53 +1,35 @@
-# AION2 ペット購入チェッカー β（個人用・試作）
+# AION2 ペットメモ v4 — iPhoneだけで使う個人用
 
-**目的**: iPhoneのSafariからモニターに映したAION2ペット商店を読み取り、Wikilyの入手先情報をもとに購入優先候補を一覧化する。
+**使用端末：iPhone（Safari）／ペット名：208種類**。ショップのスクショを「写真」から選ぶと自動でOCRして、おすすめ度を所持状況と入手経路から計算します。PCモニターの撮影やPC版スクリーンショットを前提にしません。
 
-## ファイル
-- `index.html`: iPhone向けUI、カメラ、画像選択、日本語OCR、ランキング、手動修正。
-- `pets.json`: Wikilyで出典を確認した **11種類** の初期データ。**全208種類ではありません**。
-- `sample.jpg`: 提供された画面の動作確認用。
-- `manifest.webmanifest`, `icon.svg`: ホーム画面追加用。
+## 最初にすること
 
-## iPhoneで使う
-1. これらのファイルを同じフォルダーのままGitHubリポジトリにアップロード。
-2. GitHubリポジトリ Settings → Pages → Deploy from a branch → `main` / `/ (root)` で有効化。
-3. 公開された `https://<ユーザー名>.github.io/<リポジトリ名>/` をiPhoneのSafariで開く。
-4. `サンプル判定を見る` で実際のUIの挙動を確認。
-5. `画像を選ぶ` でゲームのスクリーンショットを選んで「ペット名を読み取って判定」。もしくは `カメラを起動` でモニター画面にまっすぐ向け「撮影して判定」。
-6. 認識があいまいな場合はペット名を修正。Safari共有メニュー→「ホーム画面に追加」するとアプリ風に利用できる。
+1. このZIPを解凍。`index.html`、`app.js`、`style.css`、`pets.json`、`manifest.webmanifest`、`icon.svg`、`sample.jpg`、`.github/workflows/update-and-deploy.yml`、`tools`フォルダごとGitHubリポジトリのルートへ配置。**フォルダの中身をルートへ**。
+2. GitHubの **Settings → Pages → Build and deployment → Source: GitHub Actions** にする。
+3. GitHubの **Actions → ペット入手経路の更新と公開 → Run workflow** を実行する。しばらくすると Pages の公開URLが使えます。
+4. iPhoneのSafariで公開URLを開き、必要なら Safariの共有 → **ホーム画面に追加**。
+5. AION2でショップを開いて**iPhone本体のスクリーンショット**を撮る。アプリで「＋ スクショを選ぶ」→写真から選択。名前を自動認識し、購入候補順に表示します。
 
-GitHub Pagesはインターネット上に公開されます。個人用途でも画像はブラウザ内でOCR処理し、サイト側へのアップロード処理は行いません（OCRライブラリ・日本語言語データのダウンロードはネットワークを利用します）。
+**同じURLに上書きした場合、v2・v3の所持管理データ（localStorageキー `aion2.pet-checker.collection.v2`）を引き継ぐ設計**です。念のため旧版から先にバックアップを書き出してください。異なるURLに移す場合はバックアップJSONを復元してください。
 
-## 制約／今後改善する部分
-- **まだ試作版**。利用者の実機 iPhone / Safari での動作検証は未実施。
-- 画面の10枚のペットカードが、サンプルとほぼ同じ座標にあることを仮定して名称欄を切り出している。UIレイアウト、解像度、ブラウザキャプチャ、モニターへの角度で位置がずれると読み取れない。
-- OCRは `tesseract.js` の日本語モデルを使う。初回は読み込みが必要。**瞬時の確実な判定はまだ保証できない**。
-- ペット名が途中までしか表示されていない場合、複数候補を区別できないことがある。判定は保留して名前選択を求める。
-- 商店の「保有中」の表示は今は自動読取していない。サンプル判定のみチェック済み扱いとして表示し、実画像では手動「所持済み」切り替えが可能。所持済みでも魂の強化に使えるため、所持による優先度ダウンは初期状態では無効にしている。
-- **重要**: Wikilyのモンスター入手先はペット本体ではなく「魂」である場合が多い。ショップ・箱・覚醒戦のペット本体との違いを一律の出現数のみで判断しないこと。
-- `monster=1` でも確定入手のケースがあれば難度は異なる。出現エリア数もドロップ率の代用ではない。現在のおすすめ表示は**参考値**。
-- 未収録のペットは要確認扱い。Wikilyの全208種DBの導入、コレクション状況、価格、割引、魂の必要数、実際の入手確率を組み込むことで精度を高められる。
-- Wikilyへのアクセスに依存しないよう静的JSONを採用。更新時は出典とサイト利用条件に配慮する。
+## 所持管理
 
-## データ編集
-`pets.json` に次のような行を追加する。`slug` はWikilyのペット詳細URL上の識別子。
+画面下の「所持ペット」タブで検索し、「未登録」「未所持」「所持 Lv.1〜3」を選択。状態の変更はSafari内に保存。長い説明は閉じた状態で表示し、必要なペットだけ「メモ・自分の入手先」を開けます。バックアップも所持ペット画面の下に収納。
 
-```json
-{"name":"カイリン","slug":"kailin","category":"野性","monsters":4,"areas":46,"boxes":2,"achievements":1,"trials":8,"fieldExamples":"カイリンなど"}
-```
+## 入手経路208種類について（重要）
 
-## データ出典（2026-10-24閲覧）
-- https://wikily.gg/ja/aion-2/pets
-- https://new.wikily.gg/ja/aion-2/pets/kailin/sources
-- https://new.wikily.gg/ja/aion-2/pets/magic-gravi/sources
-- https://new.wikily.gg/ja/aion-2/pets/starturtle
-- https://new.wikily.gg/ja/aion-2/pets/papis
-- https://new.wikily.gg/ja/aion-2/pets/superior-earth-spirit/sources
-- https://new.wikily.gg/ja/aion-2/pets/lesser-earth-spirit/sources
-- https://new.wikily.gg/ja/aion-2/pets/pino-worker/sources
-- https://new.wikily.gg/ja/aion-2/pets/dry-leaf-agrint/sources
-- https://new.wikily.gg/ja/aion-2/pets/kerubiel/sources
-- https://new.wikily.gg/ja/aion-2/pets/kerubian/sources
-- https://new.wikily.gg/ja/aion-2/pets/pino/sources
+- **208種類の名前と種族**には対応。
+- **入手経路の個別確認済みは27種類（2026年10月24日時点の同梱DB）**です。残り181種類は「要確認」。完成済みと表示しません。
+- `tools/update_sources.py` は208件の個別URL（DBにslugを保持）から公開されている **本体の入手先**（黒雲貿易団・箱・実績・覚醒戦・イベント／パック）と **魂のモンスター入手元数**を区別して取得します。GitHub Actionsから週1回実行できます。アクセス制限・サイト変更等で全208件の確認を保証するものではありません。
+- `coverage.json` と `coverage.csv` に確認済み数と未確認ペットを記録。GitHub Actionsの実行結果「Summary」に、**何件確認済みか**が出ます。
+- `monsters=0` は、Wikilyの該当ページに**魂のモンスター入手元の掲載がない**という意味。実際の入手確率が0％、ダンジョン限定、ショップ限定だという意味ではありません。
+- 入手元の数が少ないことはレア度やドロップ率の証明ではありません。購入優先度は、実績・箱などの他入手経路と所持状況も表示したうえでの**目安**です。
+- ペットが読めなかった場合は候補から名前を修正。カード配置がゲーム更新や端末比率で変わるとOCR精度が落ちるため、iPhone実機でのすべての解像度の認識は未検証です。初回OCRにはネット通信（Tesseract.jsと日本語モデル）が必要です。
 
-非公式。AION2およびWikilyとの提携関係はありません。
+## メンテナンス
+
+`python -m pip install requests beautifulsoup4`
+
+`python tools/update_sources.py --workers 2 --throttle 1.0` は手動更新、 `python -m unittest discover -s tools -p test_sources.py` はパーサーテスト。Wikilyから取得できないものを0件や「限定」と決めつける処理はしません。
+
+出典： https://wikily.gg/ja/aion-2/pets ／非公式、個人使用用。

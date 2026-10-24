@@ -1,0 +1,66 @@
+name: ペット入手経路の更新と公開
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'style.css'
+      - 'app.js'
+      - 'pets.json'
+      - 'tools/**'
+      - '.github/workflows/**'
+  schedule:
+    - cron: '15 1 * * 1'
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: aion2-pet-pages
+  cancel-in-progress: false
+jobs:
+  data-and-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deps
+        run: python -m pip install requests beautifulsoup4
+      - name: Check scraper parser
+        run: python -m unittest discover -s tools -p test_sources.py
+      - name: Update Wikily data (208 names)
+        run: python tools/update_sources.py --workers 2 --throttle 1.0
+      - name: Record coverage summary
+        run: |
+          python - <<'PY'
+          import json,os
+          data=json.load(open('coverage.json',encoding='utf-8'))
+          summary=f"### 入手経路の確認状況: {data['verified']}/{data['total']}件\n\n未確認: {data['unverified']}件。未確認は推測で分類しません。\n"
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as out:out.write(summary)
+          PY
+      - name: Save sourced data
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pets.json coverage.json coverage.csv
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh sourced pet routes [skip ci]'
+            git push || echo 'Commit permission unavailable; Pages publication continues.'
+          fi
+      - uses: actions/configure-pages@v5
+      - name: Prepare static site
+        run: |
+          mkdir -p public
+          cp index.html style.css app.js pets.json icon.svg manifest.webmanifest sample.jpg public/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - uses: actions/deploy-pages@v4
+        id: deploy
