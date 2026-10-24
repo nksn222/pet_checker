@@ -1,10 +1,70 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101820"><meta name="apple-mobile-web-app-capable" content="yes"><title>AION2 ペットメモ</title><link rel="stylesheet" href="style.css"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"></head>
-<body><main><header><h1>AION2 ペットメモ</h1><span class="tiny muted" id="coverage">読込中</span></header>
-<section id="shopView">
-<div class="card hero"><h2>ショップのペットを判定</h2><p class="hint">iPhoneで撮ったゲームのスクショを写真から選ぶだけ。</p><button id="pick" class="btn primary full">＋ スクショを選ぶ</button><input id="photoInput" type="file" accept="image/*" hidden><img id="preview" class="preview" alt="読み取り中のスクショ"><p id="status" class="status" role="status">スクショを選ぶと自動で読み取ります。</p><div id="progress" class="bar"><span id="fill"></span></div><details class="tools"><summary>読み取れないとき・カメラで撮る</summary><div class="btnrow"><button id="photoCamera" class="btn small">カメラで撮影</button><button id="sample" class="btn small">サンプル画像</button></div><input id="cameraInput" type="file" accept="image/*" capture="environment" hidden><textarea id="manual" rows="2" placeholder="ペット名を1行ずつ入力"></textarea><button id="manualApply" class="btn small full">入力した名前で判定</button></details></div>
-<div id="results" hidden><div class="space resulthead"><span>購入チェック</span><span class="tiny muted" id="resultCount"></span></div><div id="shopList"></div><button id="addSlot" class="btn small full">＋ ペットを手動追加</button><p class="hint">評価は入手元の数を使った目安です。ドロップ確率や「ダンジョン限定」を保証するものではありません。</p></div>
-</section>
-<section id="collectionView" hidden><div class="space"><h2>所持ペット</h2><span id="ownedCount" class="muted tiny"></span></div><input id="search" class="full" type="search" placeholder="ペット名を検索（208種類）"><div class="filters" id="filters"><button data-filter="all" class="selected">すべて</button><button data-filter="owned">所持済み</button><button data-filter="missing">未所持</button><button data-filter="unknown">未登録</button></div><div id="collectionList"></div><button id="more" class="btn small full">もっと表示</button><details class="settings card"><summary>バックアップ・設定</summary><p class="hint">所持情報はこのiPhoneのSafari内に保存。別端末への引き継ぎにはバックアップを使ってね。</p><div class="btnrow"><button id="export" class="btn small">書き出す</button><button id="import" class="btn small">復元する</button></div><input id="importInput" type="file" accept=".json,application/json" hidden><p class="hint" id="backupStatus"></p><button id="clear" class="btn small danger">登録データを初期化</button><p class="hint" id="coverageDetails"></p></details></section>
-<footer>個人用・非公式 / <a href="https://wikily.gg/ja/aion-2/pets" target="_blank" rel="noopener">出典：Wikily</a></footer></main>
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101820">
+  <title>AION2 ペットチェッカー | PCスクショ貼り付け</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+</head>
+<body>
+<main>
+  <header><h1>AION2 ペットチェッカー</h1><span class="tiny muted" id="coverage">読込中</span></header>
+  <section id="shopView">
+    <div class="card hero">
+      <div class="intro">
+        <h2>スクショを貼り付けて判定</h2>
+        <p class="hint">PCでゲームのペットショップを撮影 → このページを開いて <kbd>Ctrl</kbd> + <kbd>V</kbd>。購入候補を表示します。</p>
+      </div>
+      <div id="pasteZone" class="pastezone" tabindex="0" role="region" aria-label="ゲーム画面のスクリーンショットを貼り付ける場所">
+        <div class="paste-icon" aria-hidden="true">▣</div>
+        <strong>ここにスクショを貼り付け</strong>
+        <span class="pastekeys"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
+        <span class="hint">画像のドラッグ＆ドロップもOK</span>
+      </div>
+      <div class="btnrow actionrow">
+        <button id="clipboardRead" class="btn primary">クリップボードから読み取る</button>
+        <button id="pick" class="btn">画像ファイルを選ぶ</button>
+      </div>
+      <input id="photoInput" type="file" accept="image/*" hidden>
+      <div class="imagewrap"><img id="preview" class="preview" alt="解析対象のゲームスクリーンショット"></div>
+      <p id="status" class="status" role="status" aria-live="polite">PCでスクショをコピーして Ctrl + V で貼り付けてください。</p>
+      <div id="progress" class="bar"><span id="fill"></span></div>
+      <details class="tools"><summary>うまく読めないとき・手動入力</summary>
+        <p class="hint">ペット名が途中までしか見えない場合は、判定結果の名前を修正できます。画像全体を撮ると認識しやすくなります。</p>
+        <textarea id="manual" rows="2" placeholder="ペット名を1行ずつ入力"></textarea>
+        <div class="btnrow"><button id="manualApply" class="btn small">入力した名前で判定</button><button id="sample" class="btn small">サンプルで試す</button></div>
+      </details>
+    </div>
+    <div id="results" hidden>
+      <div class="space resulthead"><span>購入チェック</span><span class="tiny muted" id="resultCount"></span></div>
+      <div id="shopList"></div>
+      <button id="addSlot" class="btn small full">＋ ペットを手動追加</button>
+      <p class="hint">おすすめ度は入手元の情報による目安。ドロップ率や「ダンジョン限定」を保証する判定ではありません。</p>
+    </div>
+  </section>
+  <section id="collectionView" hidden>
+    <div class="space"><h2>所持ペット</h2><span id="ownedCount" class="muted tiny"></span></div>
+    <input id="search" class="full" type="search" placeholder="ペット名を検索（208種類）">
+    <div class="filters" id="filters"><button data-filter="all" class="selected">すべて</button><button data-filter="owned">所持済み</button><button data-filter="missing">未所持</button><button data-filter="unknown">未登録</button></div>
+    <div id="collectionList"></div>
+    <button id="more" class="btn small full">もっと表示</button>
+    <details class="settings card"><summary>バックアップ・設定</summary>
+      <p class="hint">所持情報はこのブラウザ内に保存されます。PCやスマホをまたいで同期するにはJSONバックアップで移してください。</p>
+      <div class="btnrow"><button id="export" class="btn small">書き出す</button><button id="import" class="btn small">復元する</button></div>
+      <input id="importInput" type="file" accept=".json,application/json" hidden>
+      <p class="hint" id="backupStatus"></p>
+      <button id="clear" class="btn small danger">登録データを初期化</button>
+      <p class="hint" id="coverageDetails"></p>
+    </details>
+  </section>
+  <footer>個人用・非公式 / <a href="https://wikily.gg/ja/aion-2/pets" target="_blank" rel="noopener">出典：Wikily</a></footer>
+</main>
 <nav class="tabbar" aria-label="画面切替"><button id="shopTab" class="active">◉　購入チェック</button><button id="collectionTab">▤　所持ペット</button></nav>
-<datalist id="names"></datalist><script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script><script defer src="app.js"></script></body></html>
+<datalist id="names"></datalist>
+<script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script defer src="app.js"></script>
+</body>
+</html>

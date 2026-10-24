@@ -1,1 +1,1 @@
-{"name":"AION2 ペットメモ","short_name":"AION2ペット","start_url":"./index.html","scope":"./","display":"standalone","background_color":"#0c141c","theme_color":"#0c141c","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{"name":"AION2 ペットチェッカー","short_name":"AION2ペット","start_url":"./index.html","scope":"./","display":"standalone","background_color":"#0c141c","theme_color":"#0c141c","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

@@ -1,6 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id),STORE='aion2.pet-checker.collection.v2';
 let pets=[],byName=new Map(),saved={},slots=[],currentTab='shop',filter='all',searchLimit=45,activeImage=null,worker=null;
+let processing=false,pendingImage=null,scanSerial=0,previewObjectUrl=null;
 function norm(v){return String(v||'').normalize('NFKC').toLowerCase().replace(/^[ぺペべベ]ット\s*[:：・･]?/,'').replace(/[\s\u3000、。．.！!？?〔〕「」『』()[\]{}:：・･…＿_—―−-]/g,'')}
 function distance(a,b){let r=Array.from({length:b.length+1},(_,i)=>i);for(let i=0;i<a.length;i++){const n=[i+1];for(let j=0;j<b.length;j++)n.push(Math.min(n[j]+1,r[j+1]+1,r[j]+(a[i]===b[j]?0:1)));r=n}return r[b.length]}
 function candidates(raw){const s=norm(raw);if(s.length<2)return[];let exact=pets.filter(p=>norm(p.name)===s||norm(p.en)===s);if(exact.length)return exact;
@@ -38,38 +39,154 @@ function renderOwnedCount(){const n=pets.filter(p=>state(p).level>=1).length;con
 function slotFrom(raw){const opts=candidates(raw);return{raw,selected:opts.length===1?opts[0].name:''}}
 function applyNames(names){slots=names.map(x=>slotFrom(x)).filter(s=>s.raw||s.selected);renderShop();$('results').hidden=false;setTimeout(()=>$('results').scrollIntoView({behavior:'smooth',block:'start'}),40)}
 function renderShop(){const wrap=$('shopList');wrap.replaceChildren();const ordered=[...slots].sort((a,b)=>priority(byName.get(b.selected)).score-priority(byName.get(a.selected)).score);let known=0;
- for(const s of ordered){const p=byName.get(s.selected);if(p){known++;wrap.append(petCard(p,true,s));continue}const art=node('article','pet');art.append(node('h3','',s.raw||'名前を選択'));let input=node('input','full edit');input.setAttribute('list','names');input.placeholder='ペット名を入力';input.value=s.raw||'';art.append(input);const matched=candidates(s.raw).slice(0,5);if(matched.length)art.append(node('div','hint','候補：'+matched.map(p=>p.name).join('・')));let b=node('button','btn small full','この名前で確定');b.onclick=()=>{const found=byName.get(input.value)||candidates(input.value);if(Array.isArray(found)){if(found.length===1)s.selected=found[0].name;else{alert('候補が複数あります。正式な名前を選んでください。');return}}else s.selected=found.name;s.raw=input.value;renderShop()};art.append(b);wrap.append(art)}
+ for(const s of ordered){const p=byName.get(s.selected);if(p){known++;wrap.append(petCard(p,true,s));continue}const art=node('article','pet');art.append(node('h3','',s.raw||'名前を選択'));let input=node('input','full edit');input.setAttribute('list','names');input.placeholder='ペット名を入力';input.value=s.raw||'';art.append(input);const matched=candidates(s.raw).slice(0,5);if(matched.length){const chips=node('div','candidate-chips');chips.append(node('span','tiny muted','候補：'));for(const candidate of matched){const chip=node('button','candidate-chip',candidate.name);chip.type='button';chip.onclick=()=>{s.selected=candidate.name;renderShop()};chips.append(chip)}art.append(chips)}let b=node('button','btn small full','この名前で確定');b.onclick=()=>{const found=byName.get(input.value)||candidates(input.value);if(Array.isArray(found)){if(found.length===1)s.selected=found[0].name;else{alert('候補が複数あります。正式な名前を選んでください。');return}}else s.selected=found.name;s.raw=input.value;renderShop()};art.append(b);wrap.append(art)}
  $('resultCount').textContent=`${known} / ${slots.length} 確認`;if(!ordered.length)wrap.append(node('p','list-empty','まだペットがありません。'))}
 function renderCollection(){const raw=norm($('search').value);const matched=pets.filter(p=>{const st=state(p);return(!raw||norm(p.name).includes(raw)||norm(p.en).includes(raw))&&(filter==='all'||filter==='owned'&&st.level>=1||filter==='missing'&&st.level===0||filter==='unknown'&&st.level===null)});const list=$('collectionList');list.replaceChildren(...matched.slice(0,searchLimit).map(p=>petCard(p)));if(!matched.length)list.append(node('p','list-empty','該当するペットがありません。'));$('more').hidden=matched.length<=searchLimit}
 function setTab(tab){currentTab=tab;$('shopView').hidden=tab!=='shop';$('collectionView').hidden=tab!=='collection';$('shopTab').classList.toggle('active',tab==='shop');$('collectionTab').classList.toggle('active',tab==='collection');if(tab==='collection')renderCollection();window.scrollTo(0,0)}
 function status(message,n){$('status').textContent=message;$('progress').style.display=typeof n==='number'?'block':'none';if(typeof n==='number')$('fill').style.width=n+'%'}
-// OCR targets the 10 name strips on the reference shop layout. For wider iPhone
-// captures it also tries a centred 16:10 gameplay area; never auto-confirms
-// ambiguous matches. This is a best-effort template, not a universal layout model.
+// The reference layout uses 10 fixed name strips at 1440x900. For PC 16:9
+// captures we also try a centred 16:10 shop area when needed. Use the full
+// in-game shop screen rather than a single cropped card.
 const regions=[{x:209,y:268,w:112},{x:388,y:307,w:113},{x:573,y:324,w:113},{x:755,y:321,w:117},{x:939,y:312,w:114},{x:1125,y:268,w:112},{x:241,y:500,w:112},{x:426,y:534,w:111},{x:905,y:533,w:114},{x:1087,y:495,w:115}];
-function roi(image,r,mode){let sx,sy,sw,sh;if(mode==='center'){
+function roi(image,r,mode){let sx,sy,sw,sh;
+ if(mode==='center'){
   const scale=image.naturalHeight/900,origin=(image.naturalWidth-1440*scale)/2;
-  sx=origin+r.x*scale;sy=r.y*scale;sw=r.w*scale;sh=22*scale;
- }else{sx=r.x/1440*image.naturalWidth;sy=r.y/900*image.naturalHeight;sw=r.w/1440*image.naturalWidth;sh=22/900*image.naturalHeight}
- // Reject regions that extend past the visible image rather than reading random pixels.
+  sx=origin+r.x*scale;sy=r.y*scale;sw=r.w*scale;sh=20*scale;
+ }else{
+  sx=r.x/1440*image.naturalWidth;sy=r.y/900*image.naturalHeight;
+  sw=r.w/1440*image.naturalWidth;sh=20/900*image.naturalHeight;
+ }
  if(sx<0||sy<0||sx+sw>image.naturalWidth||sy+sh>image.naturalHeight)return null;
- const c=document.createElement('canvas');c.width=600;c.height=112;let cx=c.getContext('2d',{willReadFrequently:true});cx.fillStyle='white';cx.fillRect(0,0,600,112);cx.drawImage(image,sx,sy,sw,sh,10,11,580,88);
- let data=cx.getImageData(0,0,c.width,c.height);for(let i=0;i<data.data.length;i+=4){const a=.299*data.data[i]+.587*data.data[i+1]+.114*data.data[i+2];const k=Math.max(0,Math.min(255,(a-95)*2+100));data.data[i]=data.data[i+1]=data.data[i+2]=k}cx.putImageData(data,0,0);return c}
-async function recognizeLayout(image,mode){const output=[];for(let i=0;i<regions.length;i++){
- status(`読み取り中… ${i+1}/10${mode==='center'?'（別レイアウト）':''}`,Math.round((i+1)/10*85));const c=roi(image,regions[i],mode);if(!c){output.push('');continue}
- let raw='';try{const result=await worker.recognize(c);raw=String(result.data.text||'').replace(/[\r\n]/g,' ').trim().replace(/^[ぺペべベ]ット\s*[:：・･]?/,'')}catch{raw=''}output.push(raw)
- }return output}
+ const c=document.createElement('canvas');c.width=600;c.height=112;
+ const cx=c.getContext('2d',{willReadFrequently:true});
+ cx.fillStyle='white';cx.fillRect(0,0,600,112);
+ cx.drawImage(image,sx,sy,sw,sh,10,11,580,88);
+ // Invert white-on-dark game UI text into dark-on-light for Japanese OCR.
+ const data=cx.getImageData(0,0,c.width,c.height);
+ for(let i=0;i<data.data.length;i+=4){
+  const a=.299*data.data[i]+.587*data.data[i+1]+.114*data.data[i+2];
+  const k=255-Math.max(0,Math.min(255,(a-95)*2+100));
+  data.data[i]=data.data[i+1]=data.data[i+2]=k;
+ }
+ cx.putImageData(data,0,0);return c
+}
+async function recognizeLayout(image,mode,serial){const output=[];
+ for(let i=0;i<regions.length;i++){
+  if(serial!==scanSerial)return null;
+  status(`ペット名を読み取り中… ${i+1}/10${mode==='center'?'（別レイアウト）':''}`,Math.round((i+1)/10*85));
+  const c=roi(image,regions[i],mode);if(!c){output.push('');continue}
+  let raw='';
+  try{const result=await worker.recognize(c);raw=String(result.data.text||'').replace(/[\r\n]/g,' ').trim().replace(/^[ぺペべベ]ット\s*[:：・･]?/,'')}
+  catch{raw=''}
+  output.push(raw)
+ }
+ return output
+}
 function quality(arr){return arr.filter(x=>candidates(x).length===1).length}
-async function scan(){if(!activeImage)return;const button=$('pick');button.disabled=true;
- try{if(!window.Tesseract)throw Error('日本語OCRの読み込みに失敗しました。通信を確認してください。');status('初回は日本語OCRデータを準備します…',3);
- if(!worker){worker=await Tesseract.createWorker('jpn',1,{});await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.SINGLE_LINE})}
- const first=await recognizeLayout(activeImage,'stretch');let names=first;
- const ratio=activeImage.naturalWidth/activeImage.naturalHeight;
- if(quality(first)<3&&ratio>1.73){const second=await recognizeLayout(activeImage,'center');if(quality(second)>quality(first))names=second}
- if(names.every(s=>!norm(s)))throw Error('ペット名を検出できませんでした。手入力でも登録できます。');applyNames(names);status(`読み取り完了：${quality(names)}件の名前を自動確定。違う場合は名前を直してください。`);
- }catch(e){status('読み取りできませんでした：'+(e.message||e))}finally{button.disabled=false}}
-async function loadFile(file){if(!file)return;const url=URL.createObjectURL(file);try{await loadImage(url)}finally{URL.revokeObjectURL(url)}}
-function loadImage(url){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>{activeImage=im;$('preview').src=url;$('preview').classList.add('show');status('スクショを読み込みました。解析しています…',2);scan().then(resolve).catch(reject)};im.onerror=()=>reject(new Error('画像を開けませんでした'));im.src=url})}
+async function recognizeShop(image,serial){
+ if(!window.Tesseract)throw Error('日本語OCRを読み込めませんでした。ネット接続を確認してください。');
+ if(!worker){
+  status('初回の日本語OCRデータを準備しています…',3);
+  worker=await Tesseract.createWorker('jpn',1,{});
+  await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.SINGLE_LINE});
+ }
+ if(serial!==scanSerial)return;
+ const first=await recognizeLayout(image,'stretch',serial);if(!first)return;
+ let names=first;
+ if(quality(first)<3&&image.naturalWidth/image.naturalHeight>1.68){
+  const second=await recognizeLayout(image,'center',serial);
+  if(!second)return;
+  if(quality(second)>quality(first))names=second;
+ }
+ if(serial!==scanSerial)return;
+ const valid=names.filter(s=>norm(s).length>=2);
+ if(!valid.length)throw Error('名前が見つかりませんでした。ショップ全体を撮ったスクショを貼ってください。');
+ applyNames(valid);
+ status(`読み取り完了：${quality(valid)}件を自動確定。名前が違う場合は候補から選んでください。`);
+}
+// One OCR worker, one scan at a time. Latest paste wins if another image
+// arrives while a previous screenshot is being recognized.
+async function runScanQueue(){
+ if(processing)return;processing=true;
+ const controls=[$('pick'),$('clipboardRead')];controls.forEach(b=>b.disabled=true);
+ try{
+  while(pendingImage){
+   const image=pendingImage,serial=scanSerial;pendingImage=null;
+   try{await recognizeShop(image,serial)}
+   catch(e){if(serial===scanSerial)status('読み取りできませんでした：'+(e.message||e))}
+  }
+ }finally{processing=false;controls.forEach(b=>b.disabled=false);$('progress').style.display='none'}
+}
+function queueImage(im,url,ownedUrl,source){
+ activeImage=im;
+ // Image object retains its pixels while OCR runs, even if the preview changes.
+ if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null}
+ if(ownedUrl)previewObjectUrl=url;
+ $('preview').src=url;
+ $('preview').classList.add('show');
+ $('results').hidden=true;
+ pendingImage=im;scanSerial++;
+ status(`${source}を受け付けました。ペット名を読み取ります…`,2);
+ runScanQueue();
+}
+function loadImage(url,source='スクショ',ownedUrl=false){
+ return new Promise((resolve,reject)=>{
+  const im=new Image();
+  im.onload=()=>{queueImage(im,url,ownedUrl,source);resolve()};
+  im.onerror=()=>{if(ownedUrl)URL.revokeObjectURL(url);reject(new Error('画像を開けませんでした'))};
+  im.src=url;
+ });
+}
+function loadFile(file,source='スクショ'){
+ if(!file||!String(file.type).startsWith('image/'))return Promise.reject(new Error('PNGやJPGなどの画像を選んでください。'));
+ return loadImage(URL.createObjectURL(file),source,true);
+}
+function handleImageError(err){status('画像の読み込みエラー：'+(err.message||err))}
+function clipboardImage(data){
+ const items=Array.from(data?.items||[]);
+ const item=items.find(x=>x.kind==='file'&&x.type.startsWith('image/'));
+ if(item)return item.getAsFile();
+ return Array.from(data?.files||[]).find(x=>x.type.startsWith('image/'))||null;
+}
+async function readClipboard(){
+ if(!navigator.clipboard?.read){status('このブラウザではボタンからの読み取りが使えません。ページをクリックして Ctrl + V で貼り付けてください。');return}
+ try{
+  const entries=await navigator.clipboard.read();
+  for(const entry of entries){
+   const mime=entry.types.find(type=>type.startsWith('image/'));
+   if(mime){const blob=await entry.getType(mime);setTab('shop');await loadFile(blob,'クリップボードの画像');return}
+  }
+  status('クリップボードに画像がありません。ゲーム画面をスクショしてコピーしてください。');
+ }catch(e){
+  if(e.name==='NotAllowedError'||e.name==='SecurityError')status('クリップボードのアクセスが許可されませんでした。ページをクリックして Ctrl + V で貼り付けてください。');
+  else handleImageError(e)
+ }
+}
+function bindPasteAndDrop(){
+ document.addEventListener('paste',event=>{
+  const file=clipboardImage(event.clipboardData);
+  if(!file)return; // ordinary text paste in search and notes remains intact.
+  event.preventDefault();setTab('shop');
+  loadFile(file,'貼り付けたスクショ').catch(handleImageError);
+ });
+ const zone=$('pasteZone');zone.onclick=()=>zone.focus();
+ document.addEventListener('dragover',event=>{
+  if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+  event.preventDefault();event.dataTransfer.dropEffect='copy';
+  zone.classList.add('dragover');
+ });
+ document.addEventListener('dragleave',event=>{
+  if(!event.relatedTarget)zone.classList.remove('dragover');
+ });
+ document.addEventListener('drop',event=>{
+  zone.classList.remove('dragover');
+  if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+  event.preventDefault();
+  const file=Array.from(event.dataTransfer.files||[]).find(f=>f.type.startsWith('image/'));
+  if(!file){status('画像ファイルをドロップしてください。');return}
+  setTab('shop');loadFile(file,'ドロップしたスクショ').catch(handleImageError);
+ });
+}
 function backup(){return{app:'AION2 Pet Checker',schema:2,exportedAt:new Date().toISOString(),collection:saved}}
 async function exportFile(){const blob=new Blob([JSON.stringify(backup(),null,2)],{type:'application/json'}),file=new File([blob],'aion2-pets-'+new Date().toISOString().slice(0,10)+'.json',{type:'application/json'});
  if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:'AION2 ペット所持データ'});return}catch(e){if(e.name==='AbortError')return}}
@@ -78,9 +195,9 @@ async function importFile(file){try{const input=JSON.parse(await file.text());if
  if(!byName.has(name)||!r||typeof r!=='object')continue;let l=r.level==null?null:Number(r.level);if(l!==null&&(!Number.isInteger(l)||l<0||l>3))continue;cleaned[name]={level:l,source:['','フィールド','ダンジョン','ショップ・限定','その他'].includes(r.source)?r.source:'',note:String(r.note||'').slice(0,300),updatedAt:String(r.updatedAt||'')}}
  if(!confirm(`${Object.keys(cleaned).length}件を読み込み、現在の登録内容を置き換えますか？`))return;saved=cleaned;persist();renderOwnedCount();renderCollection();$('backupStatus').textContent='復元しました。'
  }catch(e){$('backupStatus').textContent='復元エラー：'+e.message}}
-async function init(){saved=parseStore();$('shopTab').onclick=()=>setTab('shop');$('collectionTab').onclick=()=>setTab('collection');$('pick').onclick=()=>$('photoInput').click();$('photoInput').onchange=e=>{loadFile(e.target.files?.[0]).catch(err=>status(err.message));e.target.value=''};
- $('photoCamera').onclick=()=>$('cameraInput').click();$('cameraInput').onchange=e=>{loadFile(e.target.files?.[0]).catch(err=>status(err.message));e.target.value=''};
- $('sample').onclick=()=>loadImage('sample.jpg').catch(e=>status(e.message));$('manualApply').onclick=()=>{const names=$('manual').value.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);if(names.length)applyNames(names)};
+async function init(){saved=parseStore();$('shopTab').onclick=()=>setTab('shop');$('collectionTab').onclick=()=>setTab('collection');$('pick').onclick=()=>$('photoInput').click();$('clipboardRead').onclick=readClipboard;bindPasteAndDrop();
+ $('photoInput').onchange=e=>{const file=e.target.files?.[0];if(file)loadFile(file,'選択したスクショ').catch(handleImageError);e.target.value=''};
+ $('sample').onclick=()=>loadImage('sample.jpg','サンプル画像').catch(handleImageError);$('manualApply').onclick=()=>{const names=$('manual').value.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);if(names.length)applyNames(names)};
  $('addSlot').onclick=()=>{slots.push({raw:'',selected:''});renderShop();$('shopList').lastElementChild?.scrollIntoView({behavior:'smooth',block:'end'})};
  $('search').oninput=()=>{searchLimit=45;renderCollection()};document.querySelectorAll('#filters button').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('#filters button').forEach(x=>x.classList.toggle('selected',x===b));searchLimit=45;renderCollection()});$('more').onclick=()=>{searchLimit+=45;renderCollection()};
  $('export').onclick=exportFile;$('import').onclick=()=>$('importInput').click();$('importInput').onchange=e=>{if(e.target.files?.[0])importFile(e.target.files[0]);e.target.value=''};$('clear').onclick=()=>{if(confirm('所持状態・メモをすべて初期化しますか？')){saved={};persist();renderOwnedCount();renderCollection()}};
