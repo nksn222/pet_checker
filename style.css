@@ -29,3 +29,26 @@ kbd{display:inline-block;min-width:25px;background:#263746;border:1px solid #4b6
 .candidate-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;align-items:center}
 .candidate-chip{padding:6px 9px;border-radius:8px;border:1px solid #4d7886;background:#203b48;color:#daf9fa;font-size:12px;min-height:34px}
 .candidate-chip:hover,.candidate-chip:focus-visible{border-color:#a4e5df;background:#32515d}
+/* v6: ten fixed shop slots, with a readable screenshot crop next to each result. */
+#shopList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.slot-tile{background:#14232d;border:1px solid #344653;border-radius:14px;padding:13px;min-width:0}
+.slot-tile.recommended{border-color:#988345}
+.slot-head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:9px;font-size:13px}
+.slot-head .match-done{color:#86dcc9}
+.slot-screenshot{display:block;width:100%;height:64px;object-fit:fill;background:#080b10;border-radius:8px;margin:0 0 10px;border:1px solid #314653}
+.slot-pick{display:flex;gap:6px}
+.slot-input{width:100%;min-width:0;flex:1;height:43px}
+.slot-confirm{white-space:nowrap;min-height:43px;padding:8px 10px;font-size:11px}
+.slot-tile .candidate-chips{min-height:24px;margin:8px 0 3px}
+.slot-tile .candidate-chip{font-size:11px;min-height:30px;padding:5px 7px}
+.slot-tile .chip-picked{border-color:#87d9c4;color:#a1f5d0}
+.slot-result{margin-top:12px;display:flex;align-items:flex-start;gap:8px}
+.slot-result .pill{flex-shrink:0}
+.slot-reason{font-size:12px;line-height:1.55;color:#dce7ed}
+.slot-source{font-size:11px;line-height:1.65;color:#a9becb;margin:7px 0 0}
+.slot-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
+.slot-foot>a{font-size:12px}
+.slot-foot select{max-width:160px;min-height:37px;padding:5px;font-size:12px}
+#resultCount{font-weight:500}
+@media(max-width:640px){#shopList{grid-template-columns:1fr}.slot-screenshot{height:80px}}
+@media(min-width:641px){main{max-width:910px}.hero{max-width:910px}.tabbar{max-width:910px;width:100%}}

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101820">
-  <title>AION2 ペットチェッカー | PCスクショ貼り付け</title>
+  <title>AION2 ペットチェッカー v6 | 10枠対応</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -15,8 +15,8 @@
   <section id="shopView">
     <div class="card hero">
       <div class="intro">
-        <h2>スクショを貼り付けて判定</h2>
-        <p class="hint">PCでゲームのペットショップを撮影 → このページを開いて <kbd>Ctrl</kbd> + <kbd>V</kbd>。購入候補を表示します。</p>
+        <h2>スクショを貼るだけで10枠チェック</h2>
+        <p class="hint">PCでゲームのペットショップを撮影 → このページを開いて <kbd>Ctrl</kbd> + <kbd>V</kbd>。10枠すべて表示し、名前を照合します。</p>
       </div>
       <div id="pasteZone" class="pastezone" tabindex="0" role="region" aria-label="ゲーム画面のスクリーンショットを貼り付ける場所">
         <div class="paste-icon" aria-hidden="true">▣</div>
@@ -32,14 +32,14 @@
       <div class="imagewrap"><img id="preview" class="preview" alt="解析対象のゲームスクリーンショット"></div>
       <p id="status" class="status" role="status" aria-live="polite">PCでスクショをコピーして Ctrl + V で貼り付けてください。</p>
       <div id="progress" class="bar"><span id="fill"></span></div>
-      <details class="tools"><summary>うまく読めないとき・手動入力</summary>
-        <p class="hint">ペット名が途中までしか見えない場合は、判定結果の名前を修正できます。画像全体を撮ると認識しやすくなります。</p>
+      <details class="tools"><summary>まとめて手動入力</summary>
+        <p class="hint">ペット名が途中までしか見えない場合は、判定結果の名前を修正できます。読めなかった枠も必ず表示されます。名前の画像を見ながら候補を選んでください。</p>
         <textarea id="manual" rows="2" placeholder="ペット名を1行ずつ入力"></textarea>
         <div class="btnrow"><button id="manualApply" class="btn small">入力した名前で判定</button><button id="sample" class="btn small">サンプルで試す</button></div>
       </details>
     </div>
     <div id="results" hidden>
-      <div class="space resulthead"><span>購入チェック</span><span class="tiny muted" id="resultCount"></span></div>
+      <div class="space resulthead"><span>購入チェック（画像を見ながら修正できます）</span><span class="tiny muted" id="resultCount"></span></div>
       <div id="shopList"></div>
       <button id="addSlot" class="btn small full">＋ ペットを手動追加</button>
       <p class="hint">おすすめ度は入手元の情報による目安。ドロップ率や「ダンジョン限定」を保証する判定ではありません。</p>
